@@ -1,7 +1,7 @@
 {
     "name": "semicolon-spammer",
     "displayName": ";;;;;;;;",
-    "description": "Puts semicolons at the end of the current line or of all currently selected lines.",
+    "description": "Gives access to a command that adds/removes semicolons at the end of the current line or of all currently selected lines.",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.29.0"
@@ -10,13 +10,13 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello"
+        "onCommand:extension.toggleSemicolons"
     ],
     "main": "./out/extension",
     "contributes": {
         "commands": [{
-            "command": "extension.sayHello",
-            "title": "Hello World"
+            "command": "extension.toggleSemicolons",
+            "title": "Toggle Semicolons"
         }]
     },
     "scripts": {

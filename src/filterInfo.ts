@@ -44,6 +44,9 @@ export default {
   "possibleOpeningChars": "[(<{",
   "possibleClosingChars": "])>}",
   "possibleWordsBeforeObject": [
+    "const",
+    "let",
+    "var",
     "throw",
     ";",
     "typeof",

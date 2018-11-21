@@ -44,7 +44,7 @@ export function activate(context: vsc.ExtensionContext) {
       }
     });
 
-    applyEdits(textEdits, editor);
+    applyEdits(textEdits, editor.document);
   });
 
   context.subscriptions.push(toggleSemicolons);
@@ -77,69 +77,39 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   }
 
   // More complicated actions
-  if (isInComment(lineNo, editor)) return null;
+  if (isInComment(lineNo, editor.document)) return null;
 
   return true;
 }
 
-function isInComment(lineNo: number, editor: vsc.TextEditor): boolean {
-  return isEnclosed('/*', '*/', lineNo, editor, false);
-  // if (!range) return false;
-  // return (lineNo > range.openLine && lineNo < range.closeLine);
-}
+// function closingOpeningDiff(line: string, opening: string, closing: string) {
+//   return line.split(opening).length-1 - (line.split(closing).length-1);
+// }
 
-function closingOpeningDiff(line: string, opening: string, closing: string) {
-  return line.split(opening).length-1 - (line.split(closing).length-1);
-}
-
-function lastOpeningWasNotClosed(line: string, opening: string, closing: string, cont: boolean): boolean|null {
-  const segments: string[] = line.split(opening);
-  if (segments.length === 1) return null;
-  // console.log(segments);
-
-  let count = 0;
-  for (let i = segments.length-1; i >= 0; i--) {
-    count = count + (segments[i].split(closing).length - 1) - 1;
-    if (!cont) break;
-  }
-  return count < 0;
-}
-
-function firstClosingWasNotOpened(line: string, opening: string, closing: string, cont: boolean): boolean|null {
-  const segments: string[] = line.split(closing);
-  if (segments.length === 1) return null;
-  if (!cont) return true;
-
-  let count = 0;
-  for (let i = 0; i < segments.length; i--) {
-    count = count + (segments[i].split(opening).length - 1) - 1;
-  }
-  return count < 0;
-}
-
-/// oke missch moet dit toch wel een range returnen zodat je er wat meer kan ook
 /// wil eigenlijk overal dit editor refactoren naar document: vsc.TextDocument
-function isEnclosed(opening: string, closing: string, lineNo: number, editor: vsc.TextEditor, cont: boolean): boolean {
+function isInComment(lineNo: number, doc: vsc.TextDocument) {
   let openLine = null;
   
   for (let i = lineNo; i >= 0; i--) {
-    if (lastOpeningWasNotClosed(editor.document.lineAt(i).text, opening, closing, cont)) {
+    if (lastOpeningWasNotClosed(doc.lineAt(i).text, '/*', '*/')) {
       openLine = i;
       break;
     }
     else if (i <= 0) return false;
   }
 
-  console.log(openLine);
-
-  for (let i = openLine; i < editor.document.lineCount; i++) {
+  for (let i = openLine; i < doc.lineCount; i++) {
     if (i >= lineNo) return true;
-    if (firstClosingWasNotOpened(editor.document.lineAt(i).text, opening, closing, cont)) {
-      return false;
-    }
+    else if (doc.lineAt(i).text.includes('*/')) return false;
   }
   
   return false;
+}
+
+function lastOpeningWasNotClosed(line: string, opening: string, closing: string): boolean|null {
+  const segments: string[] = line.split(opening);
+  if (segments.length === 1) return null;
+  return (segments[segments.length-1].split(closing).length - 1) - 1 < 0;
 }
 
 function getEndPos(lineText: string): number {
@@ -177,10 +147,10 @@ function removeSemicolon(endPosition: vsc.Position): vsc.TextEdit {
   return new vsc.TextEdit(new vsc.Range(beginPosition, endPosition), '');
 }
 
-function applyEdits(textEdits: Array<vsc.TextEdit | null>, editor: vsc.TextEditor) {
+function applyEdits(textEdits: Array<vsc.TextEdit | null>, doc: vsc.TextDocument) {
   const realEdits = textEdits.filter(edit => !!edit);
   
   const newEdits = new vsc.WorkspaceEdit();
-  newEdits.set(editor.document.uri, realEdits);
+  newEdits.set(doc.uri, realEdits);
   vsc.workspace.applyEdit(newEdits);
 }

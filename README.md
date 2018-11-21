@@ -21,15 +21,11 @@ No known issues as of version 1.0.1.
 ## Planned Features
 
 Smarter detection to not place a semicolon when:
-- the next line starts with a `.` / `||` / `...`;
-- the current line ends with a `{` / `(` / `[` / `<` / `|` / `=` / `+` / `/` / `-` / `:` / `@` / `#` / `%` / `&` / `,` / `*` / `...`;
-    (and not with `++` or `--` or `(?)`)
     (and for `}`: should intelligently know whether it delimits and object or e.g. an if statement)
-- the current line is part of a (`//` or `/* ... */`) comment
-- the current line is a decorator
+- the current line is part of a `(...)` / `[...]` / `<...>` (with commas or sth / direct so not e.g. `({})`)
+- if the current line is part of a `{}`
 - the current line is the last part of a list of commas that still needs to receive a `}`/`)`/`]`/`>`
-
-Ignore spaces at the end of a line
+- the current
 
 Functions to turn such filters on/off / change which characters are affected by them;
 

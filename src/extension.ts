@@ -6,9 +6,6 @@ import filterInfo from './filterInfo';
 export function activate(context: vsc.ExtensionContext) {
 
   let toggleSemicolons = vsc.commands.registerCommand('extension.toggleSemicolons', () => {
-    // The code you place here will be executed every time your command is executed
-
-    console.log(filterInfo);
     // Check if there is an open editor
     let editor = vsc.window.activeTextEditor;
     if (!editor || !editor.selection) {
@@ -60,6 +57,7 @@ export function deactivate() {
 function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   const line: string = editor.document.lineAt(lineNo).text;
 
+  // Actions involving just the current line
   if (checkLastChar(line, ';')) return false;
   if (line.trim().length === 0) return null;
   if (filterInfo.endLineBad.some(char => checkLastChar(line, char))) return null;
@@ -68,6 +66,15 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
     return null;
   }
   if (filterInfo.startLineBad.some(char => checkFirstChar(line, char))) return null;
+  
+  // Action(s) involving the next line
+  if (! (lineNo >= editor.document.lineCount-1)) {
+    const nextLine = editor.document.lineAt(lineNo+1).text;
+    if (filterInfo.nextLineStartBad.some(char => checkFirstChar(nextLine, char))) return null;
+  }
+
+  // More complicated actions
+
   return true;
 }
 

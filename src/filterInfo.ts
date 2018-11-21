@@ -16,6 +16,10 @@ export default {
     ",",
     "*"
   ],
+  "endLineBadLonger": [
+    "*/",
+    "/*"
+  ],
   "endLineBadButNotIfTwo": [
     "+",
     "-"
@@ -27,7 +31,8 @@ export default {
     ".",
     "|"
   ],
-  "nextLineStartBadLonger": [
+  "startLineBadLonger": [ ],
+  "inLineBad": [
     "//"
   ]
 };

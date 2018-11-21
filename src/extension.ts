@@ -61,12 +61,14 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   if (checkLastChar(line, ';')) return false;
   if (line.trim().length === 0) return null;
   if (filterInfo.endLineBad.some(char => checkLastChar(line, char))) return null;
+  if (filterInfo.endLineBadLonger.some(chars => checkLastXChars(line, chars))) return null;
   if (filterInfo.endLineBadButNotIfTwo.some(char => checkLastChar(line, char) && 
-                                                    !checkLast2Chars(line, char.repeat(2)) )) {
+                                                    !checkLastXChars(line, char.repeat(2)) )) {
     return null;
   }
   if (filterInfo.startLineBad.some(char => checkFirstChar(line, char))) return null;
-  if (filterInfo.nextLineStartBadLonger.some(chars => checkFirstXChars(line, chars))) return null;
+  if (filterInfo.startLineBadLonger.some(chars => checkFirstXChars(line, chars))) return null;
+  if (filterInfo.inLineBad.some(chars => line.includes(chars))) return null;
   
   // Action(s) involving the next line
   if (! (lineNo >= editor.document.lineCount-1)) {
@@ -77,6 +79,14 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   // More complicated actions
 
   return true;
+}
+
+function isInComment(lineNo: number, editor: vsc.TextEditor) {
+  return null;
+}
+
+function getEnclosingRange(opening: string, closing: string, lineNo: number, editor: vsc.TextEditor) {
+
 }
 
 function getEndPos(lineText: string): number {
@@ -100,8 +110,9 @@ function checkLastChar(line: string, char: string): boolean {
   return line[getEndPos(line)-1] === char;
 }
 
-function checkLast2Chars(line: string, chars: string): boolean {
-  return line.substring(getEndPos(line)-2, getEndPos(line)) === chars;
+function checkLastXChars(line: string, chars: string): boolean {
+  const length = chars.length;
+  return line.substring(getEndPos(line)-length, getEndPos(line)) === chars;
 }
 
 function addSemicolon(endPosition: vsc.Position): vsc.TextEdit {

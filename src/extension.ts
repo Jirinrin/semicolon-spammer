@@ -78,7 +78,7 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
 
   // More complicated actions
   if (isInComment(lineNo, editor.document)) return null;
-  if (filterInfo.possibleOpeningChars.includes(getCurrentClosure(lineNo, editor.document))) return null;
+  if (isInBadClosure(lineNo, editor.document)) return null;
 
   return true;
 }
@@ -107,28 +107,67 @@ function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
   return false;
 }
 
+interface CharInfo {
+  char: string;
+  pos: vsc.Position;
+}
+
+function isInBadClosure(lineNo: number, doc: vsc.TextDocument): boolean {
+  const closureInfo = getCurrentClosure(lineNo, doc);
+  if (!closureInfo) return false;
+  if (closureInfo.char === '{') {
+    const bracePrefix = doc.lineAt(closureInfo.pos.line).text.slice(0, closureInfo.pos.character).trim();
+    // If it seems like this closure is an object...
+    if ((bracePrefix[bracePrefix.length-1] === ':' || 
+        bracePrefix[bracePrefix.length-1] === '=' ||
+        bracePrefix === '' ||
+        badWordBeforeObject(bracePrefix)) &&
+        bracePrefix[bracePrefix.length-1] !== ')' ) {
+      return true;
+    }
+    else return false;
+  }
+  else if (filterInfo.possibleOpeningChars.includes(closureInfo.char)) return true;
+  else return false;
+}
+
+function badWordBeforeObject(bracePrefix: string): boolean {
+  for (let word of filterInfo.possibleWordsBeforeObject) {
+    console.log(bracePrefix.slice(-1 * word.length));
+    if (bracePrefix.slice(-1 * word.length) === word) return true;
+  }
+  return false;
+}
+
+/*
+hoe detecteer je of iets een object is:
+er staan geen (haakjes) {voor}
+er staan ook geen normale letters {voor}
+(en dus wel bijv. een = of een dubbele punt of niks)
+*/
+
 // should probably optimise so that this only has to be ran once for all lines in the selection...?
-function getCurrentClosure(lineNo: number, doc: vsc.TextDocument): string|null {
+function getCurrentClosure(lineNo: number, doc: vsc.TextDocument): CharInfo|null {
   let openClosures: string[] = [];
 
   try {
     for (let i = lineNo; i >= 0; i--) {
       [...doc.lineAt(i).text]
         .reverse()
-        .forEach(char => {
+        .forEach((char, j) => {
           if (filterInfo.possibleClosingChars.includes(char)) {
             openClosures.unshift(char);
           }
           else if (filterInfo.possibleOpeningChars.includes(char)) {
             if (filterInfo.closurePairs[char] === openClosures[0]) openClosures.shift();
-            else throw char;
+            /// kijken of dit -j gedeelte helemaal naar het juiste karakter wijst
+            else throw {char, pos: new vsc.Position(i, doc.lineAt(i).text.length - j - 1 )};
           }
         });
     }
   }
-  catch (char) {
-    console.log(char);
-    return char;
+  catch (charInfo) {
+    return charInfo;
   }
   return null;
 }

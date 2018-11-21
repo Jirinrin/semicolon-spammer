@@ -38,8 +38,27 @@ export default {
   "closurePairs": {
     "[": "]",
     "(": ")",
-    "<": ">"
+    "<": ">",
+    "{": "}"
   },
-  "possibleOpeningChars": "[(<",
-  "possibleClosingChars": "])>"
+  "possibleOpeningChars": "[(<{",
+  "possibleClosingChars": "])>}",
+  "possibleWordsBeforeObject": [
+    "throw",
+    ";",
+    "typeof",
+    "instanceof",
+    "extends",
+    "case",
+    "implements",
+    "private",
+    "public",
+    "protected",
+    "static",
+    "import",
+    "(",
+    "[",
+    "<",
+    "{"
+  ]
 };

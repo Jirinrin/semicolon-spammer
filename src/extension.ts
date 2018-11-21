@@ -1,11 +1,14 @@
 'use strict';
 import * as vsc from 'vscode';
+import filterInfo from './filterInfo';
+
 
 export function activate(context: vsc.ExtensionContext) {
 
   let toggleSemicolons = vsc.commands.registerCommand('extension.toggleSemicolons', () => {
     // The code you place here will be executed every time your command is executed
 
+    console.log(filterInfo);
     // Check if there is an open editor
     let editor = vsc.window.activeTextEditor;
     if (!editor || !editor.selection) {
@@ -28,20 +31,22 @@ export function activate(context: vsc.ExtensionContext) {
     // If there is any thing 'add semicolon' action, it should not remove any semicolon
     const onlyAdd: boolean = selectionLines
                               .map((lineNo: number) => editor.document.lineAt(lineNo).text)
-                              .some(text => shouldAdd(text) && !checkLastChar(text, ';'));
+                              .some(text => shouldAdd(text));
 
     // Map the line numbers to a bunch of TextEdits for adding/removing semicolons
     let textEdits: vsc.TextEdit[] = selectionLines.map((lineNo: number) => {
       const currentLine: string = editor.document.lineAt(lineNo).text;
       const endPosition: vsc.Position = new vsc.Position(lineNo, currentLine.length);
       
-      if (checkLastChar(currentLine, ';')) {
-        if (!onlyAdd) return removeSemicolon(endPosition);
+      switch (shouldAdd(currentLine)) {
+        case false:
+          if (!onlyAdd) return removeSemicolon(endPosition);
+          else return null;
+        case true:
+          return  addSemicolon(endPosition);
+        default:
+          return null;
       }
-      else if (shouldAdd(currentLine)) {
-        return addSemicolon(endPosition);
-      }
-      else return null;
     });
 
     applyEdits(textEdits, editor);
@@ -54,17 +59,27 @@ export function activate(context: vsc.ExtensionContext) {
 export function deactivate() {
 }
 
-function shouldAdd(line: string): boolean {
-  if (line.length === 0) return false;
+function shouldAdd(line: string): boolean|null {
+  if (checkLastChar(line, ';')) return false;
+  if (line.trim().length === 0) return null;
+  if (filterInfo.endLineBad.some(char => checkLastChar(line, char))) return null;
+  if (filterInfo.endLineBadButNotIfTwo.some(char => checkLastChar(line, char) && 
+                                                    !checkLast2Chars(line, char.repeat(2)) )) {
+    return null;
+  }
   return true;
 }
 
-function checkLastChar(lineText: string, char: string): boolean {
-  return lineText[lineText.length-1] === char;
+function getEndPos(lineText: string): number {
+  return lineText.trimRight().length;
 }
 
-function checkLast2Chars(lineText: string, chars: string): boolean {
-  return lineText[lineText.length-2] + lineText[lineText.length-1] === chars;
+function checkLastChar(line: string, char: string): boolean {
+  return line[getEndPos(line)-1] === char;
+}
+
+function checkLast2Chars(line: string, chars: string): boolean {
+  return line.substring(getEndPos(line)-2, getEndPos(line)) === chars;
 }
 
 function addSemicolon(endPosition: vsc.Position): vsc.TextEdit {
@@ -78,7 +93,6 @@ function removeSemicolon(endPosition: vsc.Position): vsc.TextEdit {
 
 function applyEdits(textEdits: Array<vsc.TextEdit | null>, editor: vsc.TextEditor) {
   const realEdits = textEdits.filter(edit => !!edit);
-  console.log(realEdits);
   
   const newEdits = new vsc.WorkspaceEdit();
   newEdits.set(editor.document.uri, realEdits);

@@ -66,6 +66,7 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
     return null;
   }
   if (filterInfo.startLineBad.some(char => checkFirstChar(line, char))) return null;
+  if (filterInfo.nextLineStartBadLonger.some(chars => checkFirstXChars(line, chars))) return null;
   
   // Action(s) involving the next line
   if (! (lineNo >= editor.document.lineCount-1)) {
@@ -88,6 +89,11 @@ function getStartPos(lineText: string): number {
 
 function checkFirstChar(line: string, char: string): boolean {
   return line[getStartPos(line)] === char;
+}
+
+function checkFirstXChars(line: string, chars: string): boolean {
+  const length = chars.length;
+  return line.substring(getStartPos(line), getStartPos(line)+length) === chars;
 }
 
 function checkLastChar(line: string, char: string): boolean {

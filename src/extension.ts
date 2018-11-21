@@ -29,16 +29,14 @@ export function activate(context: vsc.ExtensionContext) {
     }
 
     // If there is any thing 'add semicolon' action, it should not remove any semicolon
-    const onlyAdd: boolean = selectionLines
-                              .map((lineNo: number) => editor.document.lineAt(lineNo).text)
-                              .some(text => shouldAdd(text));
+    const onlyAdd: boolean = selectionLines.some((lineNo: number) => shouldAdd(lineNo, editor));
 
     // Map the line numbers to a bunch of TextEdits for adding/removing semicolons
     let textEdits: vsc.TextEdit[] = selectionLines.map((lineNo: number) => {
       const currentLine: string = editor.document.lineAt(lineNo).text;
-      const endPosition: vsc.Position = new vsc.Position(lineNo, currentLine.length);
+      const endPosition: vsc.Position = new vsc.Position(lineNo, getEndPos(currentLine));
       
-      switch (shouldAdd(currentLine)) {
+      switch (shouldAdd(lineNo, editor)) {
         case false:
           if (!onlyAdd) return removeSemicolon(endPosition);
           else return null;
@@ -59,7 +57,9 @@ export function activate(context: vsc.ExtensionContext) {
 export function deactivate() {
 }
 
-function shouldAdd(line: string): boolean|null {
+function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
+  const line: string = editor.document.lineAt(lineNo).text;
+
   if (checkLastChar(line, ';')) return false;
   if (line.trim().length === 0) return null;
   if (filterInfo.endLineBad.some(char => checkLastChar(line, char))) return null;
@@ -67,11 +67,20 @@ function shouldAdd(line: string): boolean|null {
                                                     !checkLast2Chars(line, char.repeat(2)) )) {
     return null;
   }
+  if (filterInfo.startLineBad.some(char => checkFirstChar(line, char))) return null;
   return true;
 }
 
 function getEndPos(lineText: string): number {
   return lineText.trimRight().length;
+}
+
+function getStartPos(lineText: string): number {
+  return lineText.length - lineText.trimLeft().length;
+}
+
+function checkFirstChar(line: string, char: string): boolean {
+  return line[getStartPos(line)] === char;
 }
 
 function checkLastChar(line: string, char: string): boolean {

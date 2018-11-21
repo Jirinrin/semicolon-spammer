@@ -95,6 +95,7 @@ function closingOpeningDiff(line: string, opening: string, closing: string) {
 function lastOpeningWasNotClosed(line: string, opening: string, closing: string, cont: boolean): boolean|null {
   const segments: string[] = line.split(opening);
   if (segments.length === 1) return null;
+  // console.log(segments);
 
   let count = 0;
   for (let i = segments.length-1; i >= 0; i--) {
@@ -107,15 +108,16 @@ function lastOpeningWasNotClosed(line: string, opening: string, closing: string,
 function firstClosingWasNotOpened(line: string, opening: string, closing: string, cont: boolean): boolean|null {
   const segments: string[] = line.split(closing);
   if (segments.length === 1) return null;
-  
+  if (!cont) return true;
+
   let count = 0;
   for (let i = 0; i < segments.length; i--) {
     count = count + (segments[i].split(opening).length - 1) - 1;
-    if (!cont) break;
   }
   return count < 0;
 }
 
+/// oke missch moet dit toch wel een range returnen zodat je er wat meer kan ook
 /// wil eigenlijk overal dit editor refactoren naar document: vsc.TextDocument
 function isEnclosed(opening: string, closing: string, lineNo: number, editor: vsc.TextEditor, cont: boolean): boolean {
   let openLine = null;
@@ -125,16 +127,15 @@ function isEnclosed(opening: string, closing: string, lineNo: number, editor: vs
       openLine = i;
       break;
     }
-    else if (i <= 0) return null;
+    else if (i <= 0) return false;
   }
 
-  // console.log(openLine);
+  console.log(openLine);
+
   for (let i = openLine; i < editor.document.lineCount; i++) {
     if (i >= lineNo) return true;
     if (firstClosingWasNotOpened(editor.document.lineAt(i).text, opening, closing, cont)) {
-      console.log(i);
-      if (i < lineNo) return false;
-      else return true;
+      return false;
     }
   }
   

@@ -1,8 +1,9 @@
 {
     "name": "semicolon-spammer",
     "displayName": ";;;;;;;;",
-    "description": "Gives access to a command that adds/removes semicolons at the end of the current line or of all currently selected lines.",
-    "version": "0.0.1",
+    "description": "Gives access to a command that adds/removes semicolons at the end of the current line or of all currently selected lines;",
+    "version": "1.0.1",
+    "publisher": "jirin",
     "engines": {
         "vscode": "^1.29.0"
     },

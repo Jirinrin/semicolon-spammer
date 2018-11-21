@@ -1,24 +1,13 @@
 'use strict';
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vsc from 'vscode';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vsc.ExtensionContext) {
 
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  // console.log('Congratulations, your extension "semicolon-spammer" is now active!');
-
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with  registerCommand
-  // The commandId parameter must match the command field in package.json
-  let toggleSemicolons = vscode.commands.registerCommand('extension.toggleSemicolons', () => {
+  let toggleSemicolons = vsc.commands.registerCommand('extension.toggleSemicolons', () => {
     // The code you place here will be executed every time your command is executed
 
     // Check if there is an open editor
-    let editor = vscode.window.activeTextEditor;
+    let editor = vsc.window.activeTextEditor;
     if (!editor || !editor.selection) {
       return;
     }
@@ -39,27 +28,20 @@ export function activate(context: vscode.ExtensionContext) {
     // If there is any thing 'add semicolon' action, it should not remove any semicolon
     const onlyAdd: boolean = selectionLines
                               .map((lineNo: number) => editor.document.lineAt(lineNo).text)
-                              .some(text => !isRemoveOrder(text));
+                              .some(text => shouldAdd(text) && !checkLastChar(text, ';'));
 
     // Map the line numbers to a bunch of TextEdits for adding/removing semicolons
-    let textEdits: vscode.TextEdit[] = selectionLines.map((lineNo: number) => {
+    let textEdits: vsc.TextEdit[] = selectionLines.map((lineNo: number) => {
       const currentLine: string = editor.document.lineAt(lineNo).text;
-      const endPosition: vscode.Position = new vscode.Position(lineNo, currentLine.length);
+      const endPosition: vsc.Position = new vsc.Position(lineNo, currentLine.length);
       
-      if (currentLine.length === 0) {
+      if (checkLastChar(currentLine, ';')) {
+        if (!onlyAdd) return removeSemicolon(endPosition);
+      }
+      else if (shouldAdd(currentLine)) {
         return addSemicolon(endPosition);
       }
-      else {
-        if (isRemoveOrder(currentLine)) {
-          if (!onlyAdd) {
-            return removeSemicolon(endPosition);
-          }
-        }
-        else {
-          return addSemicolon(endPosition);
-        }
-        return null;
-      }
+      else return null;
     });
 
     applyEdits(textEdits, editor);
@@ -72,24 +54,33 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
 }
 
-
-function isRemoveOrder(lineText: string): boolean {
-  return lineText.charAt(lineText.length-1) === ';';
+function shouldAdd(line: string): boolean {
+  if (line.length === 0) return false;
+  return true;
 }
 
-function addSemicolon(endPosition: vscode.Position): vscode.TextEdit {
-  return new vscode.TextEdit(new vscode.Range(endPosition, endPosition), ';');
+function checkLastChar(lineText: string, char: string): boolean {
+  return lineText[lineText.length-1] === char;
 }
 
-function removeSemicolon(endPosition: vscode.Position): vscode.TextEdit {
-  const beginPosition: vscode.Position = endPosition.translate(0, -1);
-  return new vscode.TextEdit(new vscode.Range(beginPosition, endPosition), '');
+function checkLast2Chars(lineText: string, chars: string): boolean {
+  return lineText[lineText.length-2] + lineText[lineText.length-1] === chars;
 }
 
-function applyEdits(textEdits: Array<vscode.TextEdit | null>, editor: vscode.TextEditor) {
+function addSemicolon(endPosition: vsc.Position): vsc.TextEdit {
+  return new vsc.TextEdit(new vsc.Range(endPosition, endPosition), ';');
+}
+
+function removeSemicolon(endPosition: vsc.Position): vsc.TextEdit {
+  const beginPosition: vsc.Position = endPosition.translate(0, -1);
+  return new vsc.TextEdit(new vsc.Range(beginPosition, endPosition), '');
+}
+
+function applyEdits(textEdits: Array<vsc.TextEdit | null>, editor: vsc.TextEditor) {
   const realEdits = textEdits.filter(edit => !!edit);
+  console.log(realEdits);
   
-  const newEdits = new vscode.WorkspaceEdit();
+  const newEdits = new vsc.WorkspaceEdit();
   newEdits.set(editor.document.uri, realEdits);
-  vscode.workspace.applyEdit(newEdits);
+  vsc.workspace.applyEdit(newEdits);
 }

@@ -34,5 +34,12 @@ export default {
   "startLineBadLonger": [ ],
   "inLineBad": [
     "//"
-  ]
+  ],
+  "closurePairs": {
+    "[": "]",
+    "(": ")",
+    "<": ">"
+  },
+  "possibleOpeningChars": "[(<",
+  "possibleClosingChars": "])>"
 };

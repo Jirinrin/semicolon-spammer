@@ -23,7 +23,8 @@ No known issues as of version 1.0.1.
 Smarter detection to not place a semicolon when:
     (and for `}`: should intelligently know whether it delimits and object or e.g. an if statement)
 - the current line is part of a `(...)` / `[...]` / `<...>` (with commas or sth / direct so not e.g. `({})`)
-- if the current line is part of a `{}`
+- if the current line is part of a `{}` it should be detected whether in this closure a semicolon should be placed (i.e. no semicolon in objects)
+- for `}` it should be intelligent about what type of closure it is about or sth
 - the current line is the last part of a list of commas that still needs to receive a `}`/`)`/`]`/`>`
 - the current
 

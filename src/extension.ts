@@ -78,6 +78,7 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
 
   // More complicated actions
   if (isInComment(lineNo, editor.document)) return null;
+  if (filterInfo.possibleOpeningChars.includes(getCurrentClosure(lineNo, editor.document))) return null;
 
   return true;
 }
@@ -87,7 +88,7 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
 // }
 
 /// wil eigenlijk overal dit editor refactoren naar document: vsc.TextDocument
-function isInComment(lineNo: number, doc: vsc.TextDocument) {
+function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
   let openLine = null;
   
   for (let i = lineNo; i >= 0; i--) {
@@ -104,6 +105,32 @@ function isInComment(lineNo: number, doc: vsc.TextDocument) {
   }
   
   return false;
+}
+
+// should probably optimise so that this only has to be ran once for all lines in the selection...?
+function getCurrentClosure(lineNo: number, doc: vsc.TextDocument): string|null {
+  let openClosures: string[] = [];
+
+  try {
+    for (let i = lineNo; i >= 0; i--) {
+      [...doc.lineAt(i).text]
+        .reverse()
+        .forEach(char => {
+          if (filterInfo.possibleClosingChars.includes(char)) {
+            openClosures.unshift(char);
+          }
+          else if (filterInfo.possibleOpeningChars.includes(char)) {
+            if (filterInfo.closurePairs[char] === openClosures[0]) openClosures.shift();
+            else throw char;
+          }
+        });
+    }
+  }
+  catch (char) {
+    console.log(char);
+    return char;
+  }
+  return null;
 }
 
 function lastOpeningWasNotClosed(line: string, opening: string, closing: string): boolean|null {

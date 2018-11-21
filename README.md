@@ -9,6 +9,9 @@ Because everyone (or at least me) loves using semicolons over... *not* using the
 
 (Will only remove if *all* selected lines already have a semicolon at the end)
 
+Will *not* place a semicolon when:
+- the current line is empty;
+
 ## Known Issues
 
 No known issues as of version 1.0.1.
@@ -23,6 +26,10 @@ Smarter detection to not place a semicolon when:
     (and not with `++` or `--` or `(?)`)
     (and for `}`: should intelligently know whether it delimits and object or e.g. an if statement)
 - the current line is part of a (`//` or `/* ... */`) comment
+- the current line is a decorator
+- the current line is the last part of a list of commas that still needs to receive a `}`/`)`/`]`/`>`
+
+Ignore spaces at the end of a line
 
 Functions to turn such filters on/off / change which characters are affected by them;
 

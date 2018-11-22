@@ -38,11 +38,10 @@ export default {
   "closurePairs": {
     "[": "]",
     "(": ")",
-    "<": ">",
     "{": "}"
   },
-  "possibleOpeningChars": "[(<{",
-  "possibleClosingChars": "])>}",
+  "possibleOpeningChars": "[({",
+  "possibleClosingChars": "])}",
   "possibleWordsBeforeObject": [
     "const",
     "let",

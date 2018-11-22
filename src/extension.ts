@@ -78,9 +78,9 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
 
   // More complicated actions
   if (isInComment(lineNo, editor.document)) return null;
-  if (isInObject(lineNo, editor.document)) return null;
+  if (isInBadClosure(lineNo, editor.document)) return null;
   if (checkLastChar(line, '}')) {
-    if (!isInObject(lineNo, editor.document, true)) return null;
+    if (!isInBadClosure(lineNo, editor.document, true)) return null;
   }
 
   return true;
@@ -105,8 +105,9 @@ function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
   return false;
 }
 
-function isInObject(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): boolean {
+function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): boolean {
   const closureInfo = getCurrentClosure(lineNo, doc, trimLast);
+  console.log(closureInfo);
   if (!closureInfo) return false;
   if (closureInfo.char === '{') {
     const bracePrefix = doc.lineAt(closureInfo.pos.line).text.slice(0, closureInfo.pos.character).trim();
@@ -120,7 +121,7 @@ function isInObject(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=fals
     }
     else return false;
   }
-  else if (filterInfo.possibleOpeningChars.includes(closureInfo.char)) return true;
+  if (filterInfo.possibleOpeningChars.includes(closureInfo.char)) return true;
   else return false;
 }
 
@@ -146,23 +147,26 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
         .slice(0, (trimLast && i === lineNo) ? getEndPos(doc.lineAt(i).text) - 1 : doc.lineAt(i).text.length)
         .reverse()
         .forEach((char, j) => {
-          console.log(char);
           if (filterInfo.possibleClosingChars.includes(char)) {
-            console.log('unshifting');
+            console.log(i + ' open ' + char);
             openClosures.unshift(char);
           }
           else if (filterInfo.possibleOpeningChars.includes(char)) {
-            if (filterInfo.closurePairs[char] === openClosures[0]) openClosures.shift();
-            else throw {char, pos: new vsc.Position(i, doc.lineAt(i).text.length - j - 1 )};
+            if (filterInfo.closurePairs[char] === openClosures[0]) {
+              console.log(i + ' close ' + char);
+              openClosures.shift();
+            }
+            else {
+              console.log(i + ' oh no trying to close ' + char)
+              throw {char, pos: new vsc.Position(i, doc.lineAt(i).text.length - j - 1 )};
+            }
           }
         });
     }
   }
   catch (charInfo) {
-    console.log(charInfo.pos);
     return charInfo;
   }
-  console.log('hah nothing worked');
   return null;
 }
 

@@ -78,19 +78,14 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
 
   // More complicated actions
   if (isInComment(lineNo, editor.document)) return null;
-  if (isInBadClosure(lineNo, editor.document)) return null;
+  if (isInObject(lineNo, editor.document)) return null;
   if (checkLastChar(line, '}')) {
-    if (!isInBadClosure(lineNo, editor.document, true)) return null;
+    if (!isInObject(lineNo, editor.document, true)) return null;
   }
 
   return true;
 }
 
-// function closingOpeningDiff(line: string, opening: string, closing: string) {
-//   return line.split(opening).length-1 - (line.split(closing).length-1);
-// }
-
-/// wil eigenlijk overal dit editor refactoren naar document: vsc.TextDocument
 function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
   let openLine = null;
   
@@ -110,12 +105,7 @@ function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
   return false;
 }
 
-interface CharInfo {
-  char: string;
-  pos: vsc.Position;
-}
-
-function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): boolean {
+function isInObject(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): boolean {
   const closureInfo = getCurrentClosure(lineNo, doc, trimLast);
   if (!closureInfo) return false;
   if (closureInfo.char === '{') {
@@ -124,7 +114,7 @@ function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=
     if ((bracePrefix[bracePrefix.length-1] === ':' || 
         bracePrefix[bracePrefix.length-1] === '=' ||
         bracePrefix === '' ||
-        badWordBeforeObject(bracePrefix)) &&
+        wordBeforeObject(bracePrefix)) &&
         bracePrefix[bracePrefix.length-1] !== ')' ) {
       return true;
     }
@@ -134,23 +124,25 @@ function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=
   else return false;
 }
 
-function badWordBeforeObject(bracePrefix: string): boolean {
+function wordBeforeObject(bracePrefix: string): boolean {
   for (let word of filterInfo.possibleWordsBeforeObject) {
     if (bracePrefix.slice(-1 * word.length) === word) return true;
   }
   return false;
 }
 
-// should possibly optimise so that this only has to be ran once for all lines in the selection...?
+interface CharInfo {
+  char: string;
+  pos: vsc.Position;
+}
+
+/// should possibly optimise so that this only has to be ran once for all lines in the selection...?
 function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): CharInfo|null {
   let openClosures: string[] = [];
-  
-  // if (trimLast) console.log([...doc.lineAt(lineNo).text].slice(0, (trimLast) ? getEndPos(doc.lineAt(lineNo).text) - 1 : -1));
 
   try {
     for (let i = lineNo; i >= 0; i--) {
       [...doc.lineAt(i).text]
-        /// kijken of dit werkt
         .slice(0, (trimLast && i === lineNo) ? getEndPos(doc.lineAt(i).text) - 1 : doc.lineAt(i).text.length)
         .reverse()
         .forEach((char, j) => {
@@ -160,7 +152,6 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
             openClosures.unshift(char);
           }
           else if (filterInfo.possibleOpeningChars.includes(char)) {
-            // console.log(char);
             if (filterInfo.closurePairs[char] === openClosures[0]) openClosures.shift();
             else throw {char, pos: new vsc.Position(i, doc.lineAt(i).text.length - j - 1 )};
           }

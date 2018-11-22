@@ -107,7 +107,6 @@ function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
 
 function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): boolean {
   const closureInfo = getCurrentClosure(lineNo, doc, trimLast);
-  console.log(closureInfo);
   if (!closureInfo) return false;
   if (closureInfo.char === '{') {
     const bracePrefix = doc.lineAt(closureInfo.pos.line).text.slice(0, closureInfo.pos.character).trim();
@@ -148,16 +147,13 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
         .reverse()
         .forEach((char, j) => {
           if (filterInfo.possibleClosingChars.includes(char)) {
-            console.log(i + ' open ' + char);
             openClosures.unshift(char);
           }
           else if (filterInfo.possibleOpeningChars.includes(char)) {
             if (filterInfo.closurePairs[char] === openClosures[0]) {
-              console.log(i + ' close ' + char);
               openClosures.shift();
             }
             else {
-              console.log(i + ' oh no trying to close ' + char)
               throw {char, pos: new vsc.Position(i, doc.lineAt(i).text.length - j - 1 )};
             }
           }

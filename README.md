@@ -1,7 +1,8 @@
-# semicolon-spammer README
+# Semicolon-Spammer README
 
-This is the README of ;;;;;;;;. :)
-Because everyone (or at least me) loves using semicolons over... *not* using them... and I'm of course referring to JavaScript, which is what this extension was originally built for.
+This is the README of ;;;;;;;;. :) <br>
+Because everyone (or at least me) loves using semicolons over... *not* using them... and I'm of course referring to JavaScript, which is what this extension was originally built for. <br>
+So yes, the extension is approaching a level where you can basically Ctrl+A and run this command to intelligently place semicolons wherever needed in your JavaScript file! >^<
 
 ## Features
 
@@ -68,3 +69,7 @@ Added following features:
 ### 1.1.1
 
 Fixed a bug where closures were improperly detected by removing the detecting of `<>` closures;
+
+### 1.1.2
+
+Removed console.logs from code (笑);

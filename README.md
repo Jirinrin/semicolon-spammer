@@ -29,7 +29,7 @@ Will eventually make this editable;
 The closures for `<>` aren't properly detected because of arrow syntax and less than / greater than;
 (Which is why for the time being they have been removed;)
 
-All the closure detecting has made the semicolon placing a lot slower (esp. for larger quantities);
+All the closure detecting has made the semicolon placing sometimes slightly too slow for my preference (esp. with larger quantities/documents);
 
 ## Planned Features;
 

@@ -68,7 +68,6 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   }
   if (filterInfo.startLineBad.some(char => checkFirstChar(line, char))) return null;
   if (filterInfo.startLineBadLonger.some(chars => checkFirstXChars(line, chars))) return null;
-  if (filterInfo.inLineBad.some(chars => line.includes(chars))) return null;
   
   // Action(s) involving the next line
   if (! (lineNo >= editor.document.lineCount-2)) {
@@ -77,13 +76,80 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   }
 
   // More complicated actions
+  if (filterInfo.inLineBad.some(chars => line.includes(chars))) {
+    for (let chars of filterInfo.inLineBad) {
+      if (isInString(lineNo, editor.document, chars) === false) return null;
+    }
+  }
   if (isInComment(lineNo, editor.document)) return null;
+  if (isInSimpleMultilineClosure('`', new vsc.Position(lineNo, getEndPos(editor.document.lineAt(lineNo).text)), editor.document)) return null;
   if (isInBadClosure(lineNo, editor.document)) return null;
   if (checkLastChar(line, '}')) {
     if (!isInBadClosure(lineNo, editor.document, true)) return null;
   }
 
   return true;
+}
+
+function isInString(lineNo: number, doc: vsc.TextDocument, chars: string): boolean|null {
+  const currentLine = doc.lineAt(lineNo).text;
+  const positions: vsc.Position[]|null = getPosOfCharsInLine(chars, lineNo, currentLine);
+  if (!positions) return null;
+
+  for (let pos of positions) {
+    if (isInSimpleClosure(`'`, pos.character, currentLine) === false) return false;
+    if (isInSimpleClosure(`"`, pos.character, currentLine) === false) return false;
+    if (isInSimpleMultilineClosure('`', pos, doc) === false) return false;
+  }
+  return true;
+}
+
+function isInSimpleClosure(delimitChar: string, charPos: number, lineText: string, inString:boolean=null): boolean|null {
+  let isInString = inString;
+  if (isInString === null) {
+    if (!lineText.includes(delimitChar)) return null;
+    isInString = false;
+  }
+
+  try {
+    [...lineText].forEach((char, i) => {
+      if (char === delimitChar) {
+        isInString = !isInString;
+      }
+      if (i >= charPos) throw isInString;
+    });
+  }
+  catch (bool) {
+    return bool;
+  }
+  return isInString;
+}
+
+function isInSimpleMultilineClosure(delimitChar: string, pos: vsc.Position, doc: vsc.TextDocument): boolean|null {
+  let countBeforeCheckLine = 0;
+  for (let i = 0; i < pos.line; i++) {
+    countBeforeCheckLine += (doc.lineAt(i).text.split(delimitChar).length - 1);
+  }
+  let isInString = !(countBeforeCheckLine % 2 === 0);
+  if (!countBeforeCheckLine) isInString = null;
+  return isInSimpleClosure('`', pos.character, doc.lineAt(pos.line).text, isInString);
+}
+
+function getPosOfCharsInLine(chars: string, lineNo: number, lineText: string): vsc.Position[]|null {
+  const indices = [];
+  let currentString = lineText;
+  let searchStartIndex = 0;
+  while (true) {
+    const newIndex = currentString.indexOf(chars, searchStartIndex);
+    if (newIndex < 0) break;
+    else {
+      indices.push(newIndex);
+      /// nog kijken of dit idd werkt
+      searchStartIndex = newIndex + 1;
+    }
+  }
+  if (!indices[0] && indices[0] !== 0) return null;
+  else return indices.map(char => new vsc.Position(lineNo, char));
 }
 
 function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {

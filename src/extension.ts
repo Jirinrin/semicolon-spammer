@@ -101,7 +101,7 @@ function isInString(lineNo: number, doc: vsc.TextDocument, chars: string): boole
     if (isInSimpleClosure(`"`, pos.character, currentLine) === false) return false;
     if (isInSimpleMultilineClosure('`', pos, doc) === false) return false;
   }
-  return true;
+  return (currentLine.includes(`'`) || currentLine.includes(`"`));
 }
 
 function isInSimpleClosure(delimitChar: string, charPos: number, lineText: string, inString:boolean=null): boolean|null {

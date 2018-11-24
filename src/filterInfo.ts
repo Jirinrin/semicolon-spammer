@@ -29,7 +29,8 @@ export default {
   ],
   "nextLineStartBad": [
     ".",
-    "|"
+    "|",
+    "&"
   ],
   "startLineBadLonger": [ ],
   "inLineBad": [

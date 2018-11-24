@@ -36,7 +36,7 @@ All the closure detecting has made the semicolon placing sometimes slightly too 
 
 ## Planned Features;
 
-Make it ignore existing semicolons which are part of comments/strings;
+(Maybe add a feature for a different command to basically do `Ctrl+;` and `Ctrl+Enter` in the same command?)
 
 Make the thing intelligent about `<>` closures;
 
@@ -56,24 +56,12 @@ Fixed a bug where `//` comments without string-delimiting characters would not b
 Added following feature:
 - Will not *remove* a semicolon if it's part of a comment / multi-line string;
 
-### 1.2.2;
-
-Fixed another line in Readme;
-
-### 1.2.1;
-
-Removed unnecessary text from Readme;
-
 ### 1.2.0;
 
 Added following features:
 - Will not place a semicolon when:
   - `updated` the current line contains certain characters *(provided they are not part of a string)*;
   - the (end of the) current line is part of a multi-line string;
-
-### 1.1.2;
-
-Removed console.logs from code (笑);
 
 ### 1.1.1;
 
@@ -93,10 +81,6 @@ Added following features:
   - the (end of the) current line is part of a `()`/`[]`/`<>` closure;
   - the current line is part of a `{}` closure that is an object;
   - the current line ends with a `}` of a closure that is not an object;
-
-### 1.0.1;
-
-Expanded Readme slightly;
 
 ### 1.0.0;
 

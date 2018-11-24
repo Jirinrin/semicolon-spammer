@@ -33,7 +33,7 @@ export default {
     "&"
   ],
   "startLineBadLonger": [ ],
-  "inLineBad": [
+  "inLineComment": [
     "//"
   ],
   "closurePairs": {

@@ -30,7 +30,7 @@ export function activate(context: vsc.ExtensionContext) {
 
     // Map the line numbers to a bunch of TextEdits for adding/removing semicolons
     let textEdits: vsc.TextEdit[] = selectionLines.map((lineNo: number) => {
-      const currentLine: string = editor.document.lineAt(lineNo).text;
+      const currentLine: string = getLine(lineNo, editor.document);
       const endPosition: vsc.Position = new vsc.Position(lineNo, getEndPos(currentLine));
       
       switch (shouldAdd(lineNo, editor)) {
@@ -55,10 +55,12 @@ export function deactivate() {
 }
 
 function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
-  const line: string = editor.document.lineAt(lineNo).text;
+  const line: string = getLine(lineNo, editor.document);
 
   // Actions involving just the current line
-  if (checkLastChar(line, ';')) return false;
+  if (checkLastChar(line, ';')) {
+    return shouldRemoveSemicolon(lineNo, editor.document) ? false : null;
+  }
   if (line.trim().length === 0) return null;
   if (filterInfo.endLineBad.some(char => checkLastChar(line, char))) return null;
   if (filterInfo.endLineBadLonger.some(chars => checkLastXChars(line, chars))) return null;
@@ -71,18 +73,13 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   
   // Action(s) involving the next line
   if (! (lineNo >= editor.document.lineCount-2)) {
-    const nextLine = editor.document.lineAt(lineNo+1).text;
+    const nextLine = getLine(lineNo+1, editor.document);
     if (filterInfo.nextLineStartBad.some(char => checkFirstChar(nextLine, char))) return null;
   }
 
   // More complicated actions
-  if (filterInfo.inLineBad.some(chars => line.includes(chars))) {
-    for (let chars of filterInfo.inLineBad) {
-      if (isInString(lineNo, editor.document, chars) === false) return null;
-    }
-  }
   if (isInComment(lineNo, editor.document)) return null;
-  if (isInSimpleMultilineClosure('`', new vsc.Position(lineNo, getEndPos(editor.document.lineAt(lineNo).text)), editor.document)) return null;
+  if (isInSimpleMultilineClosure('`', new vsc.Position(lineNo, getEndPos(getLine(lineNo, editor.document))), editor.document)) return null;
   if (isInBadClosure(lineNo, editor.document)) return null;
   if (checkLastChar(line, '}')) {
     if (!isInBadClosure(lineNo, editor.document, true)) return null;
@@ -91,8 +88,17 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   return true;
 }
 
+function shouldRemoveSemicolon(lineNo: number, doc: vsc.TextDocument): boolean {
+  if (isInComment(lineNo, doc)) return false;
+
+  if (isInSimpleMultilineClosure('`', new vsc.Position(lineNo, getEndPos(getLine(lineNo, doc))), doc)) {
+    return false;
+  }
+  return true;
+}
+
 function isInString(lineNo: number, doc: vsc.TextDocument, chars: string): boolean|null {
-  const currentLine = doc.lineAt(lineNo).text;
+  const currentLine = getLine(lineNo, doc);
   const positions: vsc.Position[]|null = getPosOfCharsInLine(chars, lineNo, currentLine);
   if (!positions) return null;
 
@@ -128,11 +134,11 @@ function isInSimpleClosure(delimitChar: string, charPos: number, lineText: strin
 function isInSimpleMultilineClosure(delimitChar: string, pos: vsc.Position, doc: vsc.TextDocument): boolean|null {
   let countBeforeCheckLine = 0;
   for (let i = 0; i < pos.line; i++) {
-    countBeforeCheckLine += (doc.lineAt(i).text.split(delimitChar).length - 1);
+    countBeforeCheckLine += (getLine(i, doc).split(delimitChar).length - 1);
   }
   let isInString = !(countBeforeCheckLine % 2 === 0);
   if (!countBeforeCheckLine) isInString = null;
-  return isInSimpleClosure('`', pos.character, doc.lineAt(pos.line).text, isInString);
+  return isInSimpleClosure('`', pos.character, getLine(pos.line, doc), isInString);
 }
 
 function getPosOfCharsInLine(chars: string, lineNo: number, lineText: string): vsc.Position[]|null {
@@ -153,10 +159,25 @@ function getPosOfCharsInLine(chars: string, lineNo: number, lineText: string): v
 }
 
 function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
+  if (isInSinglelineComment(lineNo, doc)) return true;
+  if (isInMultilineComment(lineNo, doc)) return true;
+  return false;
+}
+
+function isInSinglelineComment(lineNo: number, doc: vsc.TextDocument): boolean {
+  if (filterInfo.inLineComment.some(chars => getLine(lineNo, doc).includes(chars))) {
+    for (let chars of filterInfo.inLineComment) {
+      if (isInString(lineNo, doc, chars) === false) return true;
+    }
+  }
+  return false;
+}
+
+function isInMultilineComment(lineNo: number, doc: vsc.TextDocument): boolean {
   let openLine = null;
   
   for (let i = lineNo; i >= 0; i--) {
-    if (lastOpeningWasNotClosed(doc.lineAt(i).text, '/*', '*/')) {
+    if (lastOpeningWasNotClosed(getLine(i, doc), '/*', '*/')) {
       openLine = i;
       break;
     }
@@ -165,7 +186,7 @@ function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
 
   for (let i = openLine; i < doc.lineCount; i++) {
     if (i >= lineNo) return true;
-    else if (doc.lineAt(i).text.includes('*/')) return false;
+    else if (getLine(i, doc).includes('*/')) return false;
   }
   
   return false;
@@ -175,7 +196,7 @@ function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=
   const closureInfo = getCurrentClosure(lineNo, doc, trimLast);
   if (!closureInfo) return false;
   if (closureInfo.char === '{') {
-    const bracePrefix = doc.lineAt(closureInfo.pos.line).text.slice(0, closureInfo.pos.character).trim();
+    const bracePrefix = getLine(closureInfo.pos.line, doc).slice(0, closureInfo.pos.character).trim();
     // If it seems like this closure is an object...
     if ((bracePrefix[bracePrefix.length-1] === ':' || 
         bracePrefix[bracePrefix.length-1] === '=' ||
@@ -208,8 +229,8 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
 
   try {
     for (let i = lineNo; i >= 0; i--) {
-      [...doc.lineAt(i).text]
-        .slice(0, (trimLast && i === lineNo) ? getEndPos(doc.lineAt(i).text) - 1 : doc.lineAt(i).text.length)
+      [...getLine(i, doc)]
+        .slice(0, (trimLast && i === lineNo) ? getEndPos(getLine(i, doc)) - 1 : getLine(i, doc).length)
         .reverse()
         .forEach((char, j) => {
           if (filterInfo.possibleClosingChars.includes(char)) {
@@ -220,7 +241,7 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
               openClosures.shift();
             }
             else {
-              throw {char, pos: new vsc.Position(i, doc.lineAt(i).text.length - j - 1 )};
+              throw {char, pos: new vsc.Position(i, getLine(i, doc).length - j - 1 )};
             }
           }
         });
@@ -279,4 +300,8 @@ function applyEdits(textEdits: Array<vsc.TextEdit | null>, doc: vsc.TextDocument
   const newEdits = new vsc.WorkspaceEdit();
   newEdits.set(doc.uri, realEdits);
   vsc.workspace.applyEdit(newEdits);
+}
+
+function getLine(lineNo: number, doc: vsc.TextDocument): string {
+  return doc.lineAt(lineNo).text;
 }

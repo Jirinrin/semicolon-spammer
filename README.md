@@ -49,7 +49,10 @@ Built-in `Ctrl+;` shortcut;
 ### 1.2.3;
 
 Added `&` to characters that the next line should not start with to add a semicolon; <br>
-Fixed a bug where `//` comments without string-delimiting characters would not be recognised as comments;
+Fixed a bug where `//` comments without string-delimiting characters would not be recognised as comments; <br>
+
+Added following features:
+- 
 
 ### 1.2.2;
 

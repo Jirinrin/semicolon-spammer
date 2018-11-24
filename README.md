@@ -23,7 +23,9 @@ Will *not* place a semicolon when:
 - the current line is part of a `{}` closure that is an object;
 - the current line ends with a `}` of a closure that is not an object;
 In this, the 'certain characters' are defined in the file `filterInfo.ts` in the extension files;
-Will eventually make this editable;
+Will eventually make this editable; <br>
+
+Will not *remove* a semicolon if it's part of a comment / multi-line string;
 
 ## Known Issues;
 
@@ -51,8 +53,8 @@ Built-in `Ctrl+;` shortcut;
 Added `&` to characters that the next line should not start with to add a semicolon; <br>
 Fixed a bug where `//` comments without string-delimiting characters would not be recognised as comments; <br>
 
-Added following features:
-- 
+Added following feature:
+- Will not *remove* a semicolon if it's part of a comment / multi-line string;
 
 ### 1.2.2;
 

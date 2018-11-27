@@ -1,12 +1,12 @@
 # Semicolon-Spammer README;
 
-This is the README of ;;;;;;;;. :) <br>
+This is the README of `;;;;;;;;`. :) <br>
 Because everyone (or at least me) loves using semicolons over... *not* using them... and I'm of course referring to JavaScript, which is what this extension was originally built for. <br>
 So yes, the extension is approaching a level where you can basically Ctrl+A and run this command to intelligently place semicolons wherever needed in your JavaScript file! >^<
 
 ## Features;
 
-;;;;;;;; only has 1 feature: use a command (called `toggleSemicolons` // `Toggle Semicolons`) to add/remove semicolons to the ends of all currently selected lines (or the current line that the cursor is at);
+`;;;;;;;;` only has 1 feature: use a command (called `toggleSemicolons` // `Toggle Semicolons`) to add/remove semicolons to the ends of all currently selected lines (or the current line that the cursor is at);
 
 Will only remove if *all* selected lines already have a semicolon at the end;
 
@@ -29,6 +29,8 @@ Will not *remove* a semicolon if it's part of a comment / multi-line string;
 
 ## Known Issues;
 
+Multiline decorators
+
 The closures for `<>` aren't properly detected because of arrow syntax and less than / greater than;
 (Which is why for the time being they have been removed;)
 
@@ -45,6 +47,9 @@ Functions to turn such filters on/off / change which characters/words are affect
 Make it so that most filters only work when working in a JS/TS/... file;
 
 Built-in `Ctrl+;` shortcut;
+
+Checking to what extent this works for TypeScript? (Though I think it should mostly be working already because of the intelligent closure detection!)
+Maybe support for JSX? (For the time being, to make it work you can put your JSX in parentheses (`()`), and close your 'JS in JSX' (`{}`) elements on the line they were opened or start them on a new line);
 
 ## Release Notes;
 
@@ -84,4 +89,4 @@ Added following features:
 
 ### 1.0.0;
 
-Initial release of ;;;;;;;;
+Initial release of `;;;;;;;;`;

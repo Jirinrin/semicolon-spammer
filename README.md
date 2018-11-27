@@ -29,8 +29,6 @@ Will not *remove* a semicolon if it's part of a comment / multi-line string;
 
 ## Known Issues;
 
-Multiline decorators
-
 The closures for `<>` aren't properly detected because of arrow syntax and less than / greater than;
 (Which is why for the time being they have been removed;)
 
@@ -52,6 +50,11 @@ Checking to what extent this works for TypeScript? (Though I think it should mos
 Maybe support for JSX? (For the time being, to make it work you can put your JSX in parentheses (`()`), and close your 'JS in JSX' (`{}`) elements on the line they were opened or start them on a new line);
 
 ## Release Notes;
+
+### 1.2.5;
+
+Made it work for multi-line decorators; <br>
+Updated object recognition to also detect a comma in front of the closure;
 
 ### 1.2.3;
 

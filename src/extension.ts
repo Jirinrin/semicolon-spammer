@@ -84,6 +84,9 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   if (checkLastChar(line, '}')) {
     if (!isInBadClosure(lineNo, editor.document, true)) return null;
   }
+  if (checkLastChar(line, ')')) {
+    if (isInBadClosure(lineNo, editor.document, true)) return null;
+  }
 
   return true;
 }
@@ -195,8 +198,8 @@ function isInMultilineComment(lineNo: number, doc: vsc.TextDocument): boolean {
 function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): boolean {
   const closureInfo = getCurrentClosure(lineNo, doc, trimLast);
   if (!closureInfo) return false;
+  let bracePrefix: string = getLine(closureInfo.pos.line, doc).slice(0, closureInfo.pos.character).trim();
   if (closureInfo.char === '{') {
-    const bracePrefix = getLine(closureInfo.pos.line, doc).slice(0, closureInfo.pos.character).trim();
     // If it seems like this closure is an object...
     if ((bracePrefix[bracePrefix.length-1] === ':' || 
         bracePrefix[bracePrefix.length-1] === '=' ||
@@ -205,6 +208,10 @@ function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=
         bracePrefix[bracePrefix.length-1] !== ')' ) {
       return true;
     }
+    else return false;
+  }
+  else if (closureInfo.char === '(') {
+    if (bracePrefix[0] === '@') return true;
     else return false;
   }
   if (filterInfo.possibleOpeningChars.includes(closureInfo.char)) return true;

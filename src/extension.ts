@@ -12,6 +12,8 @@ export function activate(context: vsc.ExtensionContext) {
       return;
     }
 
+    console.log('hi');
+
     // Make sure there is an array of selection lines
     let selectionLines: number[] = [];
 
@@ -55,6 +57,7 @@ export function deactivate() {
 }
 
 function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
+  console.log('hi');
   const line: string = getLine(lineNo, editor.document);
 
   // Actions involving just the current line
@@ -62,19 +65,23 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
     return shouldRemoveSemicolon(lineNo, editor.document) ? false : null;
   }
   if (line.trim().length === 0) return null;
-  if (filterInfo.endLineBad.some(char => checkLastChar(line, char))) return null;
-  if (filterInfo.endLineBadLonger.some(chars => checkLastXChars(line, chars))) return null;
+  if (filterInfo.endLineBad.some(chars => checkLastXChars(line, chars))) return null;
   if (filterInfo.endLineBadButNotIfTwo.some(char => checkLastChar(line, char) && 
                                                     !checkLastXChars(line, char.repeat(2)) )) {
     return null;
   }
-  if (filterInfo.startLineBad.some(char => checkFirstChar(line, char))) return null;
-  if (filterInfo.startLineBadLonger.some(chars => checkFirstXChars(line, chars))) return null;
+  if (filterInfo.startLineBad.some(chars => checkFirstXChars(line, chars))) return null;
   
   // Action(s) involving the next line
-  if (! (lineNo >= editor.document.lineCount-2)) {
-    const nextLine = getLine(lineNo+1, editor.document);
-    if (filterInfo.nextLineStartBad.some(char => checkFirstChar(nextLine, char))) return null;
+  if (!(lineNo > editor.document.lineCount - 2)) {
+    let nextLine = getLine(lineNo+1, editor.document);
+    for (let i = 2; i < editor.document.lineCount - 1 - lineNo; i++) {
+      if (!(nextLine.trim() === '' || 
+            checkFirstXChars(nextLine, '//') ||
+            isInComment(lineNo, editor.document))) break;
+      nextLine = getLine(lineNo+i, editor.document);
+    }    
+    if (filterInfo.nextLineStartBad.some(chars => checkFirstXChars(nextLine, chars))) return null;
   }
 
   // More complicated actions
@@ -197,7 +204,7 @@ function isInMultilineComment(lineNo: number, doc: vsc.TextDocument): boolean {
 
 function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): boolean {
   const closureInfo = getCurrentClosure(lineNo, doc, trimLast);
-  if (!closureInfo) return false;
+
   let bracePrefix: string = getLine(closureInfo.pos.line, doc).slice(0, closureInfo.pos.character).trim();
   if (closureInfo.char === '{') {
     // If it seems like this closure is an object...
@@ -210,7 +217,7 @@ function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=
     }
     else return false;
   }
-  else if (closureInfo.char === '(') {
+  else if (trimLast && closureInfo.char === '(') {
     if (bracePrefix[0] === '@') return true;
     else return false;
   }
@@ -236,10 +243,13 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
 
   try {
     for (let i = lineNo; i >= 0; i--) {
-      [...getLine(i, doc)]
-        .slice(0, (trimLast && i === lineNo) ? getEndPos(getLine(i, doc)) - 1 : getLine(i, doc).length)
+      const line = getLine(i, doc);
+      [...line]
+        .slice(0, line.length)
         .reverse()
         .forEach((char, j) => {
+          const x = line.length - 1 - getEndPos(line);
+          if (trimLast && i === lineNo && j < line.length - getEndPos(line)) return;
           if (filterInfo.possibleClosingChars.includes(char)) {
             openClosures.unshift(char);
           }
@@ -248,7 +258,7 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
               openClosures.shift();
             }
             else {
-              throw {char, pos: new vsc.Position(i, getLine(i, doc).length - j - 1 )};
+              throw {char, pos: new vsc.Position(i, line.length - j - 1 )};
             }
           }
         });
@@ -274,9 +284,9 @@ function getStartPos(lineText: string): number {
   return lineText.length - lineText.trimLeft().length;
 }
 
-function checkFirstChar(line: string, char: string): boolean {
-  return line[getStartPos(line)] === char;
-}
+// function checkFirstChar(line: string, char: string): boolean {
+//   return line[getStartPos(line)] === char;
+// }
 
 function checkFirstXChars(line: string, chars: string): boolean {
   const length = chars.length;

@@ -14,11 +14,11 @@ export default {
     "%",
     "&",
     ",",
-    "*"
-  ],
-  "endLineBadLonger": [
+    "*",
     "*/",
-    "/*"
+    "/*",
+    "?",
+    "=>"
   ],
   "endLineBadButNotIfTwo": [
     "+",
@@ -30,9 +30,16 @@ export default {
   "nextLineStartBad": [
     ".",
     "|",
-    "&"
+    "&",
+    "/",
+    "*",
+    "=",
+    "+ ",
+    "- ",
+    "%",
+    ":",
+    "?"
   ],
-  "startLineBadLonger": [ ],
   "inLineComment": [
     "//"
   ],
@@ -48,7 +55,10 @@ export default {
     "let",
     "var",
     "throw",
+    "default",
+    "export",
     ";",
+    "return",
     "typeof",
     "instanceof",
     "extends",

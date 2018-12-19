@@ -52,6 +52,10 @@ Maybe support for JSX? (For the time being, to make it work you can put your JSX
 
 ## Release Notes;
 
+### 1.2.7;
+
+- Fixed game-breaking bug crashing the extension when running it in global scope;
+
 ### 1.2.6;
 
 - Added some valid characters and words to the filterInfo;

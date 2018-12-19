@@ -12,8 +12,6 @@ export function activate(context: vsc.ExtensionContext) {
       return;
     }
 
-    console.log('hi');
-
     // Make sure there is an array of selection lines
     let selectionLines: number[] = [];
 
@@ -57,7 +55,6 @@ export function deactivate() {
 }
 
 function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
-  console.log('hi');
   const line: string = getLine(lineNo, editor.document);
 
   // Actions involving just the current line
@@ -66,12 +63,14 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
   }
   if (line.trim().length === 0) return null;
   if (filterInfo.endLineBad.some(chars => checkLastXChars(line, chars))) return null;
+  console.log('y');
   if (filterInfo.endLineBadButNotIfTwo.some(char => checkLastChar(line, char) && 
                                                     !checkLastXChars(line, char.repeat(2)) )) {
     return null;
   }
   if (filterInfo.startLineBad.some(chars => checkFirstXChars(line, chars))) return null;
   
+  console.log('yo');
   // Action(s) involving the next line
   if (!(lineNo > editor.document.lineCount - 2)) {
     let nextLine = getLine(lineNo+1, editor.document);
@@ -84,13 +83,17 @@ function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null {
     if (filterInfo.nextLineStartBad.some(chars => checkFirstXChars(nextLine, chars))) return null;
   }
 
+  console.log('yoo');
   // More complicated actions
   if (isInComment(lineNo, editor.document)) return null;
   if (isInSimpleMultilineClosure('`', new vsc.Position(lineNo, getEndPos(getLine(lineNo, editor.document))), editor.document)) return null;
+  console.log('yooo');
   if (isInBadClosure(lineNo, editor.document)) return null;
+  console.log('yoooo');
   if (checkLastChar(line, '}')) {
     if (!isInBadClosure(lineNo, editor.document, true)) return null;
   }
+  console.log('yooooo');
   if (checkLastChar(line, ')')) {
     if (isInBadClosure(lineNo, editor.document, true)) return null;
   }
@@ -202,8 +205,10 @@ function isInMultilineComment(lineNo: number, doc: vsc.TextDocument): boolean {
   return false;
 }
 
-function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): boolean {
+function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast: boolean = false): boolean {
   const closureInfo = getCurrentClosure(lineNo, doc, trimLast);
+  console.log(closureInfo);
+  if (!closureInfo) return false;
 
   let bracePrefix: string = getLine(closureInfo.pos.line, doc).slice(0, closureInfo.pos.character).trim();
   if (closureInfo.char === '{') {
@@ -238,7 +243,7 @@ interface CharInfo {
 }
 
 /// should possibly optimise so that this only has to be ran once for all lines in the selection...?
-function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boolean=false): CharInfo|null {
+function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast : boolean = false): CharInfo|null {
   let openClosures: string[] = [];
 
   try {
@@ -248,8 +253,9 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
         .slice(0, line.length)
         .reverse()
         .forEach((char, j) => {
-          const x = line.length - 1 - getEndPos(line);
-          if (trimLast && i === lineNo && j < line.length - getEndPos(line)) return;
+          const x = line.length - getEndPos(line);
+          // if console.log(x, j);
+          if (trimLast && i === lineNo && j <= line.length - getEndPos(line)) return;
           if (filterInfo.possibleClosingChars.includes(char)) {
             openClosures.unshift(char);
           }
@@ -262,11 +268,11 @@ function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast:boole
             }
           }
         });
+      }
     }
-  }
-  catch (charInfo) {
-    return charInfo;
-  }
+    catch (charInfo) {
+      return charInfo;
+    }
   return null;
 }
 

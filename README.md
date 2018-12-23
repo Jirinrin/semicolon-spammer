@@ -30,8 +30,6 @@ Will not *remove* a semicolon if it's part of a comment / multi-line string;
 
 ## Known Issues;
 
-- Closure detection does not skip comment/string areas (for this I need to write the detection functions for these more generically)
-
 - The closures for `<>` aren't properly detected because of arrow syntax and less than / greater than;
 (Which is why for the time being they have been removed;)
 - All the closure detecting has made the semicolon placing sometimes slightly too slow for my preference (esp. with larger quantities/documents);
@@ -52,6 +50,10 @@ Checking to what extent this works for TypeScript? (Though I think it should mos
 Maybe support for JSX? (For the time being, to make it work you can put your JSX in parentheses (`()`), and close your 'JS in JSX' (`{}`) elements on the line they were opened or start them on a new line);
 
 ## Release Notes;
+
+### 1.2.8;
+
+- Made closure detection more intelligent to skip commented / string areas;
 
 ### 1.2.7;
 

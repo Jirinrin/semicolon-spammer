@@ -214,7 +214,7 @@ interface CharInfo {
 }
 
 /// should possibly optimise so that this only has to be ran once for all lines in the selection...?
-// (just provide some mapping to 'which closure a certain character is part of')
+// (just provide some mapping to 'which closure a certain character is part of', and other info like 'is it part of a string' and 'is it part of a comment')
 export function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast: boolean = false): CharInfo|null {
   let openClosures: string[] = [];
 

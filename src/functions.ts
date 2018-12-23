@@ -18,21 +18,22 @@ export function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null 
   }
   if (filterInfo.startLineBad.some(chars => checkFirstXChars(line, chars))) return null;
   
+  const currentEndPos = new vsc.Position(lineNo, getEndPos(getLine(lineNo, editor.document)));
   // Action(s) involving the next line
   if (!(lineNo > editor.document.lineCount - 2)) {
     let nextLine = getLine(lineNo+1, editor.document);
     for (let i = 2; i < editor.document.lineCount - 1 - lineNo; i++) {
       if (!(nextLine.trim() === '' || 
             checkFirstXChars(nextLine, '//') ||
-            isInComment(lineNo, editor.document))) break;
+            isInComment(lineNo, currentEndPos, editor.document))) break;
       nextLine = getLine(lineNo+i, editor.document);
     }    
     if (filterInfo.nextLineStartBad.some(chars => checkFirstXChars(nextLine, chars))) return null;
   }
 
   // More complicated actions
-  if (isInComment(lineNo, editor.document)) return null;
-  if (isInSimpleMultilineClosure('`', new vsc.Position(lineNo, getEndPos(getLine(lineNo, editor.document))), editor.document)) return null;
+  if (isInComment(lineNo, currentEndPos, editor.document)) return null;
+  if (isInSimpleMultilineClosure('`', currentEndPos, editor.document)) return null;
   if (isInBadClosure(lineNo, editor.document)) return null;
   if (checkLastChar(line, '}')) {
     if (!isInBadClosure(lineNo, editor.document, true)) return null;
@@ -45,7 +46,7 @@ export function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null 
 }
 
 export function shouldRemoveSemicolon(lineNo: number, doc: vsc.TextDocument): boolean {
-  if (isInComment(lineNo, doc)) return false;
+  if (isInComment(lineNo, new vsc.Position(lineNo, getEndPos(getLine(lineNo, doc))), doc)) return false;
 
   if (isInSimpleMultilineClosure('`', new vsc.Position(lineNo, getEndPos(getLine(lineNo, doc))), doc)) {
     return false;
@@ -54,7 +55,7 @@ export function shouldRemoveSemicolon(lineNo: number, doc: vsc.TextDocument): bo
 }
 
 /// moet voor deze karakters ook nog checken dat ze niet door een ander stringkarakter geenclosed zijn, slash dat ze niet in comment zitten...?
-export function isInString(lineNo: number, doc: vsc.TextDocument, position: vsc.Position): boolean|null {
+export function isInString(lineNo: number, position: vsc.Position, doc: vsc.TextDocument): boolean|null {
   const currentLine = getLine(lineNo, doc);
 
   if (isInSimpleClosure(`'`, position.character, currentLine)) return true;
@@ -111,20 +112,15 @@ export function getPosOfCharsInLine(chars: string, lineNo: number, lineText: str
   else return indices.map(char => new vsc.Position(lineNo, char));
 }
 
-export function isInComment(lineNo: number, doc: vsc.TextDocument): boolean {
-  if (isInSinglelineComment(lineNo, doc)) return true;
-  if (isInMultilineComment(lineNo, doc)) return true;
-  return false;
-}
-
-export function isInSinglelineComment(lineNo: number, doc: vsc.TextDocument): boolean {
+export function isInSinglelineComment(lineNo: number, pos: vsc.Position, doc: vsc.TextDocument): boolean {
   if (filterInfo.inLineComment.some(chars => getLine(lineNo, doc).includes(chars))) {
     const currentLine = getLine(lineNo, doc);
     for (let chars of filterInfo.inLineComment) {
-      const positions: vsc.Position[]|null = getPosOfCharsInLine(chars, lineNo, currentLine);
-      if (!positions) return null;
-      for (let pos of positions) {
-        if (isInString(lineNo, doc, pos) === false) return true;
+      // checken dat deze slice goed gaat met +1
+      const commentPositions: vsc.Position[]|null = getPosOfCharsInLine(chars, lineNo, currentLine.slice(0, pos.character + 1));
+      if (!commentPositions) return null;
+      for (let commentPos of commentPositions) {
+        if (isInString(lineNo, commentPos, doc) === false) return true;
       }
     }
   }
@@ -132,22 +128,31 @@ export function isInSinglelineComment(lineNo: number, doc: vsc.TextDocument): bo
 }
 
 /// ook nog checken op in string
-export function isInMultilineComment(lineNo: number, doc: vsc.TextDocument): boolean {
+export function isInMultilineComment(lineNo: number, pos: vsc.Position, doc: vsc.TextDocument): boolean {
   let openLine = null;
   
   for (let i = lineNo; i >= 0; i--) {
+    // idem met slice
+    const line = i === lineNo ? getLine(i, doc).slice(0, pos.character + 1) : getLine(i, doc);
     if (lastOpeningWasNotClosed(getLine(i, doc), '/*', '*/')) {
       openLine = i;
       break;
     }
     else if (i <= 0) return false;
   }
-
+  
   for (let i = openLine; i < doc.lineCount; i++) {
     if (i >= lineNo) return true;
-    else if (getLine(i, doc).includes('*/')) return false;
+    // idem met slice
+    else if (getLine(i, doc).slice(0, pos.character + 1).includes('*/')) return false;
   }
   
+  return false;
+}
+
+export function isInComment(lineNo: number, pos: vsc.Position, doc: vsc.TextDocument): boolean {
+  if (isInSinglelineComment(lineNo, pos, doc)) return true;
+  if (isInMultilineComment(lineNo, pos, doc)) return true;
   return false;
 }
 
@@ -188,6 +193,7 @@ interface CharInfo {
 }
 
 /// should possibly optimise so that this only has to be ran once for all lines in the selection...?
+// (just provide some mapping to 'which closure a certain character is part of')
 export function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLast: boolean = false): CharInfo|null {
   let openClosures: string[] = [];
 
@@ -202,7 +208,9 @@ export function getCurrentClosure(lineNo: number, doc: vsc.TextDocument, trimLas
           if (trimLast && i === lineNo && j <= line.length - getEndPos(line)) return;
           check = false;
           if (char === '{' || char === '}') check = true;
-          if (isInString(i, doc, new vsc.Position(i, line.length - 1 - j))) return;
+          const currentPosition = new vsc.Position(i, line.length - 1 - j);
+          if (isInString(i, currentPosition, doc)) return;
+          if (isInComment(i, currentPosition, doc)) return;
           check = false;
           if (filterInfo.possibleClosingChars.includes(char)) {
             openClosures.unshift(char);

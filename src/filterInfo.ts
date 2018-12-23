@@ -50,6 +50,8 @@ export default {
   },
   "possibleOpeningChars": "[({",
   "possibleClosingChars": "])}",
+  /// bij dit kijken welke woorden ook gelden als ze op de vorige regel (slash geskipt met comments enzo) stonden
+  /// of wacht het is natuurlijk al goed zeker want als niks ervoor dan ziet hij het ook als object...?
   "possibleWordsBeforeObject": [
     "const",
     "let",

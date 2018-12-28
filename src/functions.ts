@@ -181,7 +181,10 @@ export function isInBadClosure(lineNo: number, doc: vsc.TextDocument, trimLast: 
   const closureInfo = getCurrentClosure(lineNo, doc, trimLast);
   if (!closureInfo) return false;
 
+  /// Gotta make this more intelligent, but will do that when everything is properly indexed
   let bracePrefix: string = getLine(closureInfo.pos.line, doc).slice(0, closureInfo.pos.character).trim();
+  if (bracePrefix === '' && closureInfo.pos.line !== 0) bracePrefix = getLine(closureInfo.pos.line - 1, doc).trim();
+  
   if (closureInfo.char === '{') {
     // If it seems like this closure is an object...
     if ((bracePrefix[bracePrefix.length-1] === ':' || 

@@ -51,6 +51,10 @@ Maybe support for JSX? (For the time being, to make it work you can put your JSX
 
 ## Release Notes;
 
+### 1.2.9;
+
+- Enabled closures starting at the next line of their prefix;
+
 ### 1.2.8;
 
 - Made closure detection more intelligent to skip commented / string areas;

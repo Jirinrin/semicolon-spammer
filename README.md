@@ -31,6 +31,7 @@ Will not *remove* a semicolon if it's part of a comment / multi-line string;
 ## Demo;
 
 ![gif-1](readme-images/semicolon-spammer-1.gif)
+![gif-2](readme-images/semicolon-spammer-2.gif)
 
 ## Known Issues;
 

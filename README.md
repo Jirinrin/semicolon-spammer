@@ -28,6 +28,10 @@ Will eventually make this editable; <br>
 
 Will not *remove* a semicolon if it's part of a comment / multi-line string;
 
+## Demo;
+
+![gif-1](readme-images/semicolon-spammer-1.gif)
+
 ## Known Issues;
 
 - The closures for `<>` aren't properly detected because of arrow syntax and less than / greater than;

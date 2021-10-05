@@ -8,15 +8,18 @@ export function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null 
 
   // Actions involving just the current line
   if (checkLastChar(line, ';')) {
-    return shouldRemoveSemicolon(lineNo, editor.document) ? false : null;
+    return shouldRemoveSemicolon(lineNo, editor.document) ? 
+      false : null;
   }
-  if (line.trim().length === 0) return null;
-  if (filterInfo.endLineBad.some(chars => checkLastXChars(line, chars))) return null;
-  if (filterInfo.endLineBadButNotIfTwo.some(char => checkLastChar(line, char) && 
-                                                    !checkLastXChars(line, char.repeat(2)) )) {
+  if (line.trim().length === 0) 
     return null;
-  }
-  if (filterInfo.startLineBad.some(chars => checkFirstXChars(line, chars))) return null;
+  if (filterInfo.endLineBad.some(chars => checkLastXChars(line, chars))) 
+    return null;
+  if (filterInfo.endLineBadButNotIfTwo.some(char => checkLastChar(line, char) && 
+                                                    !checkLastXChars(line, char.repeat(2)) ))
+    return null;
+  if (filterInfo.startLineBad.some(chars => checkFirstXChars(line, chars))) 
+    return null;
   
   const currentEndPos = new vsc.Position(lineNo, getEndPos(getLine(lineNo, editor.document)));
   // Action(s) involving the next line
@@ -25,21 +28,28 @@ export function shouldAdd(lineNo: number, editor: vsc.TextEditor): boolean|null 
     for (let i = 2; i < editor.document.lineCount - 1 - lineNo; i++) {
       if (!(nextLine.trim() === '' || 
             checkFirstXChars(nextLine, '//') ||
-            isInComment(currentEndPos, editor.document))) break;
+            isInComment(currentEndPos, editor.document))) 
+        break;
       nextLine = getLine(lineNo+i, editor.document);
-    }    
-    if (filterInfo.nextLineStartBad.some(chars => checkFirstXChars(nextLine, chars))) return null;
+    }
+    if (filterInfo.nextLineStartBad.some(chars => checkFirstXChars(nextLine, chars))) 
+      return null;
   }
 
   // More complicated actions
-  if (isInComment(currentEndPos, editor.document)) return null;
-  if (isInSimpleMultilineClosure('`', currentEndPos, editor.document)) return null;
-  if (isInBadClosure(lineNo, editor.document)) return null;
+  if (isInComment(currentEndPos, editor.document)) 
+    return null;
+  if (isInSimpleMultilineClosure('`', currentEndPos, editor.document)) 
+    return null;
+  if (isInBadClosure(lineNo, editor.document)) 
+    return null;
   if (checkLastChar(line, '}')) {
-    if (!isInBadClosure(lineNo, editor.document, true)) return null;
+    if (!isInBadClosure(lineNo, editor.document, true)) 
+      return null;
   }
   if (checkLastChar(line, ')')) {
-    if (isInBadClosure(lineNo, editor.document, true)) return null;
+    if (isInBadClosure(lineNo, editor.document, true)) 
+      return null;
   }
 
   return true;

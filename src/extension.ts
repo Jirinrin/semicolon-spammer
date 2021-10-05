@@ -1,6 +1,7 @@
 'use strict';
 import * as vsc from 'vscode';
 import * as f from './functions';
+import { scanLines } from './utilityNew';
 
 export function activate(context: vsc.ExtensionContext) {
 
@@ -19,10 +20,11 @@ export function activate(context: vsc.ExtensionContext) {
       selectionLines = [selectionLineRange[0]];
     }
     else {
-      for (let i = selectionLineRange[0]; i <= selectionLineRange[1]; i++) {
+      for (let i = selectionLineRange[0]; i <= selectionLineRange[1]; i++)
         selectionLines.push(i);
-      }
     }
+
+    scanLines(selectionLineRange[1], selectionLines, editor);
 
     // If there is any thing 'add semicolon' action, it should not remove any semicolon
     const onlyAdd: boolean = selectionLines.some((lineNo: number) => f.shouldAdd(lineNo, editor));

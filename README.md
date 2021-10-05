@@ -54,6 +54,8 @@ Built-in `Ctrl+;` shortcut;
 Checking to what extent this works for TypeScript? (Though I think it should mostly be working already because of the intelligent closure detection!)
 Maybe support for JSX? (For the time being, to make it work you can put your JSX in parentheses (`()`), and close your 'JS in JSX' (`{}`) elements on the line they were opened or start them on a new line);
 
+Make it work with multicursors;
+
 ## Release Notes;
 
 ### 1.2.9;
